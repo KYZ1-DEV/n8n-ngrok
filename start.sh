@@ -36,15 +36,30 @@ export WEBHOOK_URL=$NGROK_URL
 docker compose down
 docker compose up -d
 
-# Counter mundur 25 detik
-COUNT=25
-while [ $COUNT -gt 0 ]; do
-  echo "⏳ Aplikasi akan dijalankan dalam $COUNT detik..."
-  sleep 1
-  COUNT=$((COUNT-1))
+# Progress bar hijau
+TOTAL=25
+for ((i=0; i<=TOTAL; i++)); do
+    PERCENT=$((i * 100 / TOTAL))
+    FILLED=$((i * 30 / TOTAL))   # panjang bar = 30
+    EMPTY=$((30 - FILLED))
+
+    BAR=$(printf "%0.s█" $(seq 1 $FILLED))
+    SPACE=$(printf "%0.s " $(seq 1 $EMPTY))
+
+    # \r overwrite, \033[32m warna hijau, \033[0m reset
+    printf "\r\033[32m⏳ [%s%s] %3d%%\033[0m" "$BAR" "$SPACE" "$PERCENT"
+
+    sleep 1
 done
 
-echo "✅ DONE 🚀"
+printf "\r\033[32m✅ DONE 🚀                          \033[0m\n"
 
-# Buka browser otomatis
-xdg-open "$NGROK_URL" >/dev/null 2>&1 &
+# Buka browser otomatis (WSL friendly)
+if command -v wslview > /dev/null; then
+    wslview "$NGROK_URL"
+elif command -v xdg-open > /dev/null; then
+    xdg-open "$NGROK_URL" >/dev/null 2>&1 &
+else
+    echo "⚠️ Tidak bisa membuka browser otomatis. Silakan buka manual:"
+    echo "$NGROK_URL"
+fi
